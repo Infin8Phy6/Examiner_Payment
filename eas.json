@@ -1,0 +1,22 @@
+{
+    "build": {
+      "development": {
+        "developmentClient": true,
+        "web": {
+          "buildType": "production",
+          "env": {
+            "NODE_ENV": "production"
+          }
+        }
+      },
+      "production": {
+        "web": {
+          "buildType": "production",
+          "env": {
+            "NODE_ENV": "production"
+          }
+        }
+      }
+    }
+  }
+  

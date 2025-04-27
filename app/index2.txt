@@ -1,0 +1,136 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'expo-router'; // Import Link from expo-router
+import emailjs from 'emailjs-com';
+
+const SERVICE_ID = 'service_kmx0ooh';
+const TEMPLATE_ID = 'template_zd1aih4';
+const PUBLIC_KEY = '_dkaY-q3tRpMldyUw';
+
+const IndexPage = () => {
+  const [email, setEmail] = useState('');
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [userOtp, setUserOtp] = useState('');
+  const [emailSaved, setEmailSaved] = useState(false);
+
+  // Check if email is already saved in localStorage (when the component mounts)
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('myemail');
+    if (storedEmail) {
+      setEmailSaved(true); // Mark email as saved
+    }
+  }, []);
+
+  // Validate email format
+  const validateEmail = (value: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(value);
+
+    
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    setIsEmailValid(validateEmail(value)); // Update validity on input change
+  };
+
+  // Send OTP to the email
+  const sendOtp = () => {
+    if (!isEmailValid) {
+      alert('Please enter a valid email.');
+      return;
+    }
+
+    const otp = Math.floor(10000000 + Math.random() * 90000000).toString(); // 6-digit OTP
+    setGeneratedOtp(otp);
+
+    const templateParams = {
+      to_email: email,
+      otp_code: otp,
+    };
+
+    // Send OTP using emailjs service
+    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+      .then(() => {
+        alert('OTP sent to your email!');
+        setOtpSent(true); // Mark OTP as sent
+      })
+      .catch((error) => {
+        console.error('Email send error:', error);
+        alert('Failed to send OTP. Please try again.');
+      });
+  };
+
+  // Verify OTP entered by the user
+  const verifyOtp = () => {
+    if (userOtp === generatedOtp) {
+      localStorage.setItem('myemail', email);
+      localStorage.setItem('otp', userOtp); // Save the verified OTP
+      setEmailSaved(true); // Mark the email as saved after OTP verification
+      alert('OTP verified and email saved!');
+    } else {
+      alert('Invalid OTP. Please try again.');
+    }
+  };
+
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h2>
+        {!otpSent && 'Register with your Email'}
+        {otpSent && !emailSaved && 'Verify OTP'}
+        {emailSaved && 'Go to Payment Page'}
+      </h2>
+
+      {/* Step 1: Email input and Send OTP button */}
+      {!otpSent && (
+        <>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={handleEmailChange}
+            style={{ padding: '0.5rem', width: '250px', marginBottom: '1rem' }}
+          />
+          <br />
+          <button onClick={sendOtp} disabled={!isEmailValid}>
+            Send OTP
+          </button>
+        </>
+      )}
+
+      {/* Step 2: OTP input and Verify OTP button */}
+      {otpSent && !emailSaved && (
+        <>
+          <div style={{ marginTop: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Enter OTP"
+              value={userOtp}
+              onChange={(e) => setUserOtp(e.target.value)}
+              style={{ padding: '0.5rem', width: '150px' }}
+            />
+            <br />
+            <button onClick={verifyOtp} style={{ marginTop: '0.5rem' }}>
+              Verify OTP
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Step 3: Button to go to Payment page, only shown after OTP is verified */}
+      {emailSaved && (
+        <div style={{ marginTop: '2rem' }}>
+          <Link href="/payment">
+            <button style={{ padding: '1rem', backgroundColor: 'blue', color: 'white', borderRadius: '8px' }}>
+              Go to Payment Page
+            </button>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default IndexPage;
